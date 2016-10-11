@@ -30,6 +30,7 @@ public final class InvContract {
         // the MIME type of the CONTENT_URI for A single inventory item
         public static final String CONTENT_ITEM_TYPE =
                 ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_INV;
+
         // Name of the database table for inventory items
         public final static String TABLE_NAME = "InventoryApp";
         // Create the format of the database
@@ -39,6 +40,7 @@ public final class InvContract {
         public final static String COLUMN_INV_NAME = "name";
         public final static String COLUMN_INV_QUANTITY = "quantity";
         public final static String COLUMN_INV_PRICE = "price";
-        // How can I add an image from camera or my photo to my app ?
+        public final static String COLUMN_INV_SOLD = "sold";
+        public final static String COLUMN_INV_IMAGE = "imagePath";
     }
 }

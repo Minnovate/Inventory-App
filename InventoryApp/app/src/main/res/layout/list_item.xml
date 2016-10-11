@@ -23,7 +23,7 @@
             android:fontFamily="sans-serif"
             android:textAppearance="?android:textAppearanceSmall"
             android:textColor="@color/textColor"
-            android:text="Quantity: "/>
+            android:text="@string/label_quantity"/>
         <TextView
             android:id="@+id/quantity"
             android:layout_width="wrap_content"
@@ -39,7 +39,7 @@
             android:fontFamily="sans-serif"
             android:textAppearance="?android:textAppearanceSmall"
             android:textColor="@color/textColor"
-            android:text="Price: $"
+            android:text="@string/label_price"
             android:paddingLeft="@dimen/textPadding"/>
         <TextView
             android:id="@+id/price"
@@ -50,5 +50,22 @@
             android:textColor="@color/textColor"
             android:textSize="@dimen/textSize"
             android:text="666"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif"
+            android:textAppearance="?android:textAppearanceSmall"
+            android:textColor="@color/textColor"
+            android:text="@string/label_sold"
+            android:paddingLeft="@dimen/textPadding"/>
+        <TextView
+            android:id="@+id/sold"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif"
+            android:textAppearance="?android:textAppearance"
+            android:textColor="@color/textColor"
+            android:textSize="@dimen/textSize"
+            android:text="8"/>
     </LinearLayout>
 </LinearLayout>

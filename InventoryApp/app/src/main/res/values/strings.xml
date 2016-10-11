@@ -7,13 +7,17 @@
     <string name="hint_inv_name">Google Pixel</string>
     <string name="item_quantity">Overview</string>
 
-    <string name="label_price">Price</string>
+    <string name="label_price">Price: $</string>
     <string name="hint_inv_price">649</string>
     <string name="price_inv">USD</string>
 
-    <string name="label_quantity">Quantity</string>
+    <string name="label_quantity">Quantity: </string>
     <string name="hint_inv_quantity">10</string>
     <string name="unit_inv">piece(s)</string>
+
+    <string name="label_sold">Sold Quantity: </string>
+    <string name="hint_inv_sold">8</string>
+    <string name="label_image">Produc Image</string>
 
     <!-- Menu button-->
     <string name="action_delete">Delete item</string>
@@ -27,6 +31,8 @@
     <string name="editor_update_inv_successful">Item updated successfully</string>
     <string name="editor_delete_inv_failed">Error with deleting item</string>
     <string name="editor_delete_inv_successful">Item deleted</string>
+    <string name="editor_quantity_edit_failed">Quantity or Price cannot be a negative number</string>
+    <string name="editor_empty_not_allow">Empty product information is not allowed</string>
 
     <!-- Dialog message when user is leaving editor but hasn't saved changes [CHAR LIMIT=NONE] -->
     <string name="unsaved_changes_dialog_msg">Discard your changes and quit editing?</string>
@@ -42,4 +48,12 @@
     <string name="delete">Delete</string>
     <!-- Dialog button text for the option to cancel deletion of the current pet [CHAR LIMIT=20] -->
     <string name="cancel">Cancel</string>
+
+    <string name="inventory_guideline"> - Click Sell to reduce the inventory by 1 unit
+        \n- Click Restock to increase the inventory by 1 unit
+        \n- Click Buy to contact Supplier</string>
+
+    <string name="sell">Sell</string>
+    <string name="restock">Restock</string>
+    <string name="ordermore">Order more</string>
 </resources>

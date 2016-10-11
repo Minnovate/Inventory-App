@@ -8,7 +8,6 @@ import android.view.ViewGroup;
 import android.widget.CursorAdapter;
 import android.widget.TextView;
 
-import com.example.android.inventoryapp.R;
 import com.example.android.inventoryapp.data.InvContract.InvEntry;
 
 /**
@@ -28,20 +27,24 @@ public class InvCursorAdapter extends CursorAdapter {
         TextView nameTextView = (TextView) view.findViewById(R.id.name);
         TextView quantityTextView = (TextView) view.findViewById(R.id.quantity);
         TextView priceTextView = (TextView) view.findViewById(R.id.price);
+        TextView soldTextView = (TextView) view.findViewById(R.id.sold);
 
         // Find the columns of item attributes that we're interested in
         int nameColumnIndex = cursor.getColumnIndex(InvEntry.COLUMN_INV_NAME);
         int quantityColumnIndex = cursor.getColumnIndex(InvEntry.COLUMN_INV_QUANTITY);
         int priceColumnIndex = cursor.getColumnIndex(InvEntry.COLUMN_INV_PRICE);
+        int soldColumnIndex = cursor.getColumnIndex(InvEntry.COLUMN_INV_SOLD);
 
         // Read the item attributes from the Cursor for the current item
         String invName = cursor.getString(nameColumnIndex);
         String invPrice = cursor.getString(priceColumnIndex);
         String invQuantity = cursor.getString(quantityColumnIndex);
+        String invSold = cursor.getString(soldColumnIndex);
 
         // Update the TextViews with the attributes for the current item
         nameTextView.setText(invName);
         quantityTextView.setText(invQuantity);
         priceTextView.setText(invPrice);
+        soldTextView.setText(invSold);
     }
 }

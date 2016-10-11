@@ -20,11 +20,13 @@ public class InvDbHelper extends SQLiteOpenHelper{
     @Override
     public void onCreate(SQLiteDatabase db){
         // Create a String that contains the SQL statement to create the inventory table
-        String SQL_CREATE_INV_TABLE = "CREATE TABLE" + InvEntry.TABLE_NAME+" ("
+        String SQL_CREATE_INV_TABLE = "CREATE TABLE " + InvEntry.TABLE_NAME+" ("
                 + InvEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                 + InvEntry.COLUMN_INV_NAME + " TEXT NOT NULL, "
                 + InvEntry.COLUMN_INV_PRICE + " INTEGER NOT NULL DEFAULT 0,"
-                + InvEntry.COLUMN_INV_QUANTITY + " INTEGER NOT NULL DEFAULT 0);";
+                + InvEntry.COLUMN_INV_QUANTITY + " INTEGER NOT NULL DEFAULT 0,"
+                + InvEntry.COLUMN_INV_SOLD + " INTEGER NOT NULL DEFAULT 0,"
+                + InvEntry.COLUMN_INV_IMAGE + " TEXT NOT NULL);";
         // Execute the SQL statement
         db.execSQL(SQL_CREATE_INV_TABLE);
     }

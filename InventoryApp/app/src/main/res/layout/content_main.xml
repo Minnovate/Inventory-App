@@ -105,5 +105,101 @@
                 android:text="@string/unit_inv"
                 style="@style/EditorUnitsStyle"/>
         </RelativeLayout>
+
     </LinearLayout>
+    <!-- SOLD category -->
+    <LinearLayout
+        android:id="@+id/container_sold"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <!-- Label -->
+        <TextView
+            android:text="@string/label_sold"
+            style="@style/CategoryStyle" />
+
+        <!-- Input fields -->
+        <RelativeLayout
+            android:layout_height="wrap_content"
+            android:layout_width="0dp"
+            android:layout_weight="2"
+            android:paddingLeft="4dp">
+
+            <!-- Weight field -->
+            <TextView
+                android:id="@+id/sold_quantity"
+                android:inputType="number"
+                style="@style/EditorFieldStyle" />
+
+            <!-- Units for weight (kg) -->
+            <TextView
+                android:id="@+id/label_sold_units"
+                android:text="@string/unit_inv"
+                style="@style/EditorUnitsStyle"/>
+        </RelativeLayout>
+
+    </LinearLayout>
+    <!-- Image category -->
+    <LinearLayout
+        android:id="@+id/container_image"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <!-- Label -->
+        <TextView
+            android:id="@+id/label_image"
+            android:text="@string/label_image"
+            style="@style/CategoryStyle" />
+        <Button
+            android:id="@+id/takePhoto"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:onClick="onClick"
+            android:text="Take Photo" />
+
+        <!-- Image fields -->
+        <ImageView
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:id="@+id/product_image"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <Button
+            android:id="@+id/sell"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/paddingTop"
+            android:text="@string/sell"
+            android:layout_weight="1"
+            android:background="@color/colorAccent"/>
+        <Button
+            android:id="@+id/restock"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/paddingTop"
+            android:text="@string/restock"
+            android:layout_weight="1"/>
+        <Button
+            android:id="@+id/ordermore"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/paddingTop"
+            android:text="@string/ordermore"
+            android:layout_weight="1"
+            android:background="@color/colorAccent"/>
+    </LinearLayout>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/inventory_guideline"
+        android:id="@+id/inventory_guideline"/>
 </LinearLayout>

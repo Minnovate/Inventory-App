@@ -3,24 +3,39 @@ package com.example.android.inventoryapp;
 import android.app.AlertDialog;
 import android.app.LoaderManager;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.CursorLoader;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.support.v4.app.NavUtils;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.android.inventoryapp.data.InvContract.InvEntry;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * Created by gamelord on 10/4/16.
@@ -35,6 +50,10 @@ public class ContentActivity extends AppCompatActivity implements LoaderManager.
     private EditText mNameEditText;
     private EditText mPriceEditText;
     private EditText mQuantityEditText;
+    private TextView mSoldText;
+    private ImageView mImageView;
+    private int number = 0;
+    private int basequantity = 0;
 
     // Boolean flag that keeps track of whether the item has been edited or not
     private boolean mInvHasChanged = false;
@@ -46,11 +65,17 @@ public class ContentActivity extends AppCompatActivity implements LoaderManager.
         }
     };
 
+    static final int REQUEST_TAKE_PHOTO = 1;
+    Boolean imageStatus = false;
+    private String mImagePath;
+    String imagePath;
+
     //
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.content_main);
+
 
         // Examine the intent that was used to launch this activity to figure out if we're creating a new item or editing an existing one.
         Intent intent = getIntent();
@@ -64,18 +89,70 @@ public class ContentActivity extends AppCompatActivity implements LoaderManager.
             // Invalidate the options menu, so the "Delete" menu option can be hidden.
             // (It doesn't make sense to delete an item that hasn't been created yet.)
             invalidateOptionsMenu();
+            // hire buttons and textView
+            Button sellButton = (Button) findViewById(R.id.sell);
+            sellButton.setVisibility(View.GONE);
+            Button restockButton = (Button) findViewById(R.id.restock);
+            restockButton.setVisibility(View.GONE);
+            Button ordermoreButton = (Button) findViewById(R.id.ordermore);
+            ordermoreButton.setVisibility(View.GONE);
+            TextView inventory = (TextView) findViewById(R.id.inventory_guideline);
+            inventory.setVisibility(View.GONE);
+            Button imageButton = (Button) findViewById(R.id.takePhoto);
+            imageButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+
+                    imageStatus = false;
+                    dispatchTakePictureIntent();
+
+                }
+            });
         } else {
             // Otherwise this is an existing item, so change app bar to say "Edit an item"
             setTitle(getString(R.string.editor_activity_title_edit_item));
 
             // Initialize a loader to read the item data from the database and display the current values in the editor
             getLoaderManager().initLoader(EXISTING_INV_LOADER, null, this);
+            Button sellButton = (Button) findViewById(R.id.sell);
+            sellButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    basequantity = 0;
+                    number = -1;
+                    saveInv();
+                }
+            });
+            Button restockButton = (Button) findViewById(R.id.restock);
+            restockButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    basequantity = -1;
+                    number = +1;
+                    saveInv();
+                }
+            });
+            Button ordermoreButton = (Button) findViewById(R.id.ordermore);
+            ordermoreButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    String nameString = mNameEditText.getText().toString().trim();
+                    String priceString = mPriceEditText.getText().toString().trim();
+                    String quantityString = mQuantityEditText.getText().toString().trim();
+                    String orderMessage = createOrderSummary(nameString, priceString, quantityString);
+                    composeEmail(nameString, "New oder request for " + nameString, orderMessage);
+                }
+            });
+            Button imageButton = (Button) findViewById(R.id.takePhoto);
+            imageButton.setVisibility(View.GONE);
         }
 
         // Find all relevant views that we will need to read user input from
         mNameEditText = (EditText) findViewById(R.id.edit_inv_name);
         mPriceEditText = (EditText) findViewById(R.id.edit_inv_price);
         mQuantityEditText = (EditText) findViewById(R.id.edit_inv_quantity);
+        mImageView = (ImageView) findViewById(R.id.product_image);
+
 
         // Setup OnTouchListeners on all the input fields, so we can determine if the user
         // has touched or modified them. This will let us know if there are unsaved changes
@@ -94,12 +171,28 @@ public class ContentActivity extends AppCompatActivity implements LoaderManager.
         String nameString = mNameEditText.getText().toString().trim();
         String priceString = mPriceEditText.getText().toString().trim();
         String quantityString = mQuantityEditText.getText().toString().trim();
+        String soldString = mSoldText.getText().toString().trim();
+        int quantityInt = Integer.parseInt(quantityString);
+        int priceInt = Integer.parseInt(priceString);
+        int soldInt = Integer.parseInt(soldString);
+        if (quantityInt <= basequantity || priceInt <= 0) {
+            Toast.makeText(this, getString(R.string.editor_quantity_edit_failed),
+                    Toast.LENGTH_SHORT).show();
+            return;
+        } else {
+            quantityInt = quantityInt + number; //add number to the quantity number
+            soldInt = quantityInt - number;
+            quantityString = String.valueOf(quantityInt);
+            soldString = String.valueOf(soldInt);
+        }
 
         // Check if this is supposed to be a new item
         // and check if all the fields in the editor are blank
         if (mCurrentInvUri == null &&
                 TextUtils.isEmpty(nameString) && TextUtils.isEmpty(priceString) &&
                 TextUtils.isEmpty(quantityString)) {
+            Toast.makeText(this, getString(R.string.editor_empty_not_allow),
+                    Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -108,19 +201,8 @@ public class ContentActivity extends AppCompatActivity implements LoaderManager.
         values.put(InvEntry.COLUMN_INV_NAME, nameString);
         values.put(InvEntry.COLUMN_INV_PRICE, priceString);
         values.put(InvEntry.COLUMN_INV_QUANTITY, quantityString);
-
-
-
-        // If the weight is not provided by the user, don't try to parse the string into an
-        // integer value. Use 0 by default.
-//        int weight = 0;
-//        if (!TextUtils.isEmpty(weightString)) {
-//            weight = Integer.parseInt(weightString);
-//        }
-//        values.put(InvEntry.COLUMN_PET_WEIGHT, weight);
-
-
-
+        values.put(InvEntry.COLUMN_INV_SOLD,soldString); // The default of sold quantity for new product is 0
+        values.put(InvEntry.COLUMN_INV_IMAGE, mImagePath);
 
 
         // Determine if this is a new or existing pet by checking if mCurrentPetUri is null or not
@@ -251,7 +333,9 @@ public class ContentActivity extends AppCompatActivity implements LoaderManager.
                 InvEntry._ID,
                 InvEntry.COLUMN_INV_NAME,
                 InvEntry.COLUMN_INV_PRICE,
-                InvEntry.COLUMN_INV_QUANTITY};
+                InvEntry.COLUMN_INV_QUANTITY,
+                InvEntry.COLUMN_INV_SOLD,
+                InvEntry.COLUMN_INV_IMAGE};
 
         // This loader will execute the ContentProvider's query method on a background thread
         return new CursorLoader(this,   // Parent activity context
@@ -276,16 +360,33 @@ public class ContentActivity extends AppCompatActivity implements LoaderManager.
             int nameColumnIndex = cursor.getColumnIndex(InvEntry.COLUMN_INV_NAME);
             int priceColumnIndex = cursor.getColumnIndex(InvEntry.COLUMN_INV_PRICE);
             int quantityColumnIndex = cursor.getColumnIndex(InvEntry.COLUMN_INV_QUANTITY);
+            int soldColumnIndex = cursor.getColumnIndex(InvEntry.COLUMN_INV_SOLD);
+            int imageColumnIndex = cursor.getColumnIndex(InvEntry.COLUMN_INV_IMAGE);
 
             // Extract out the value from the Cursor for the given column index
             String name = cursor.getString(nameColumnIndex);
             int price = cursor.getInt(priceColumnIndex);
             int quantity = cursor.getInt(quantityColumnIndex);
+            int sold = cursor.getInt(soldColumnIndex);
+            String mImagePath = cursor.getString(imageColumnIndex);
 
             // Update the views on the screen with the values from the database
             mNameEditText.setText(name);
             mPriceEditText.setText(Integer.toString(price));
             mQuantityEditText.setText(Integer.toString(quantity));
+            mSoldText.setText(Integer.toString(sold));
+
+            // Get the dimensions of the bitmap
+            BitmapFactory.Options bmOptions = new BitmapFactory.Options();
+            bmOptions.inJustDecodeBounds = true;
+            BitmapFactory.decodeFile(mImagePath, bmOptions);
+
+            // Decode the image file into a Bitmap sized to fill the View
+            bmOptions.inJustDecodeBounds = false;
+            bmOptions.inPurgeable = true;
+
+            Bitmap bitmap = BitmapFactory.decodeFile(mImagePath, bmOptions);
+            mImageView.setImageBitmap(bitmap);
         }
     }
 
@@ -295,6 +396,8 @@ public class ContentActivity extends AppCompatActivity implements LoaderManager.
         mNameEditText.setText("");
         mPriceEditText.setText("");
         mQuantityEditText.setText("");
+        mSoldText.setText("");
+
     }
 
     /**
@@ -380,5 +483,99 @@ public class ContentActivity extends AppCompatActivity implements LoaderManager.
 
         // Close the activity
         finish();
+    }
+
+    // Create an order summary
+    private String createOrderSummary(String nameString, String priceString, String quantityString) {
+        int quantityInt = Integer.parseInt(quantityString);
+        int priceInt = Integer.parseInt(priceString);
+        String orderMessage = "Order request for : " + nameString;
+        orderMessage = orderMessage + "\nQuantity: " + quantityInt;
+        orderMessage = orderMessage + "\nPrice per unit: $" + priceInt * 0.9;
+        orderMessage = orderMessage + "\nTotal: $" + priceInt * 0.9 * quantityInt;
+        orderMessage = orderMessage + "\nThank you!";
+        return orderMessage;
+
+    }
+
+    // Compose email to supplier
+    public void composeEmail(String addresses, String subject, String body) {
+        Intent intent = new Intent(Intent.ACTION_SENDTO);
+        intent.setData(Uri.parse("mailto:")); // only email apps should handle this
+        intent.putExtra(Intent.EXTRA_EMAIL, addresses);
+        intent.putExtra(Intent.EXTRA_SUBJECT, subject);
+        intent.putExtra(Intent.EXTRA_TEXT, body);
+        if (intent.resolveActivity(getPackageManager()) != null) {
+            startActivity(intent);
+        }
+    }
+
+    // Camera handler
+    private void dispatchTakePictureIntent() {
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        // Ensure that there's a camera activity to handle the intent
+        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+            // Create the File where the photo should go
+            File imageFile = null;
+            try {
+                imageFile = createImageFile();
+            } catch (IOException ex) {
+                // Error occurred while creating the File
+                ex.printStackTrace();
+            }
+            // Continue only if the File was successfully created
+            if (imageFile != null) {
+                Uri photoURI = FileProvider.getUriForFile(this,
+                        "com.example.android.inventoryapp",
+                        imageFile);
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
+            }
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode != RESULT_CANCELED) {
+            if (requestCode == REQUEST_TAKE_PHOTO && data != null) {
+                Bitmap photo = (Bitmap) data.getExtras().get("data");
+                mImageView.setImageBitmap(photo);
+            }
+
+            try {
+                createImageFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private File createImageFile() throws IOException {
+        // Create an image file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String imageFileName = "JPEG_" + timeStamp + "_";
+        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        File image = File.createTempFile(
+                imageFileName,  /* prefix */
+                ".jpg",         /* suffix */
+                storageDir      /* directory */
+        );
+
+        FileOutputStream outputStream;
+
+        try {
+            outputStream = openFileOutput(image.getAbsolutePath(), Context.MODE_PRIVATE);
+            outputStream.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // Save a file: path for use with ACTION_VIEW intents
+        mImagePath = "file:" + image.getAbsolutePath();
+        if (!imageStatus) {
+            imagePath = image.getAbsolutePath();
+            imageStatus = true;
+        }
+        return image;
     }
 }
