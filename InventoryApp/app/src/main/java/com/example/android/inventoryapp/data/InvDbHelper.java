@@ -26,7 +26,7 @@ public class InvDbHelper extends SQLiteOpenHelper{
                 + InvEntry.COLUMN_INV_PRICE + " INTEGER NOT NULL DEFAULT 0,"
                 + InvEntry.COLUMN_INV_QUANTITY + " INTEGER NOT NULL DEFAULT 0,"
                 + InvEntry.COLUMN_INV_SOLD + " INTEGER NOT NULL DEFAULT 0,"
-                + InvEntry.COLUMN_INV_IMAGE + " TEXT NOT NULL);";
+                + InvEntry.COLUMN_INV_IMAGE + " TEXT);";
         // Execute the SQL statement
         db.execSQL(SQL_CREATE_INV_TABLE);
     }

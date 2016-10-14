@@ -50,7 +50,7 @@ public class ContentActivity extends AppCompatActivity implements LoaderManager.
     private EditText mNameEditText;
     private EditText mPriceEditText;
     private EditText mQuantityEditText;
-    private TextView mSoldText;
+    private EditText mSoldText;
     private ImageView mImageView;
     private int number = 0;
     private int basequantity = 0;
@@ -152,6 +152,7 @@ public class ContentActivity extends AppCompatActivity implements LoaderManager.
         mPriceEditText = (EditText) findViewById(R.id.edit_inv_price);
         mQuantityEditText = (EditText) findViewById(R.id.edit_inv_quantity);
         mImageView = (ImageView) findViewById(R.id.product_image);
+        mSoldText = (EditText) findViewById(R.id.sold_quantity);
 
 
         // Setup OnTouchListeners on all the input fields, so we can determine if the user
@@ -160,6 +161,7 @@ public class ContentActivity extends AppCompatActivity implements LoaderManager.
         mNameEditText.setOnTouchListener(mTouchListener);
         mPriceEditText.setOnTouchListener(mTouchListener);
         mQuantityEditText.setOnTouchListener(mTouchListener);
+        mSoldText.setOnTouchListener(mTouchListener);
     }
 
     /**
@@ -181,16 +183,16 @@ public class ContentActivity extends AppCompatActivity implements LoaderManager.
             return;
         } else {
             quantityInt = quantityInt + number; //add number to the quantity number
-            soldInt = quantityInt - number;
+            soldInt = soldInt - number;
             quantityString = String.valueOf(quantityInt);
             soldString = String.valueOf(soldInt);
         }
 
         // Check if this is supposed to be a new item
-        // and check if all the fields in the editor are blank
+        // and check if any of the fields in the editor are blank
         if (mCurrentInvUri == null &&
-                TextUtils.isEmpty(nameString) && TextUtils.isEmpty(priceString) &&
-                TextUtils.isEmpty(quantityString)) {
+                TextUtils.isEmpty(nameString) || TextUtils.isEmpty(priceString) ||
+                TextUtils.isEmpty(quantityString) || TextUtils.isEmpty(soldString)) {
             Toast.makeText(this, getString(R.string.editor_empty_not_allow),
                     Toast.LENGTH_SHORT).show();
             return;
@@ -201,7 +203,7 @@ public class ContentActivity extends AppCompatActivity implements LoaderManager.
         values.put(InvEntry.COLUMN_INV_NAME, nameString);
         values.put(InvEntry.COLUMN_INV_PRICE, priceString);
         values.put(InvEntry.COLUMN_INV_QUANTITY, quantityString);
-        values.put(InvEntry.COLUMN_INV_SOLD,soldString); // The default of sold quantity for new product is 0
+        values.put(InvEntry.COLUMN_INV_SOLD, soldString);
         values.put(InvEntry.COLUMN_INV_IMAGE, mImagePath);
 
 
@@ -513,6 +515,7 @@ public class ContentActivity extends AppCompatActivity implements LoaderManager.
     // Camera handler
     private void dispatchTakePictureIntent() {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
         // Ensure that there's a camera activity to handle the intent
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
             // Create the File where the photo should go

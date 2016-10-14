@@ -95,6 +95,10 @@ public class InvProvider extends ContentProvider {
         if (quantity != null && quantity < 0) {
             throw new IllegalArgumentException("Please enter a valid quantity");
         }
+        Integer sold = values.getAsInteger(InvEntry.COLUMN_INV_SOLD);
+        if (sold != null && sold <0 ) {
+            throw new IllegalArgumentException("Please enter a valid (> 0) sold quantity");
+        }
         // Get writable database
         SQLiteDatabase database = mDbHelper.getWritableDatabase();
 

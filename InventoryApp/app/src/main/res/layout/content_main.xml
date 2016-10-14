@@ -127,8 +127,9 @@
             android:paddingLeft="4dp">
 
             <!-- Weight field -->
-            <TextView
+            <EditText
                 android:id="@+id/sold_quantity"
+                android:hint="0"
                 android:inputType="number"
                 style="@style/EditorFieldStyle" />
 
