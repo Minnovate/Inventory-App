@@ -67,5 +67,13 @@
             android:textColor="@color/textColor"
             android:textSize="@dimen/textSize"
             android:text="8"/>
+        <Button
+            android:id="@+id/sellone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/textPadding"
+            android:layout_alignParentRight="true"
+            android:text="@string/sell"
+            android:background="@color/colorAccent"/>
     </LinearLayout>
 </LinearLayout>

@@ -136,9 +136,6 @@ public class ContentActivity extends AppCompatActivity implements LoaderManager.
                 }
             });
 
-            //String imageString = mImageEdit.getText().toString().trim();
-//            mUri = Uri.parse(imageString);
-//            mImageView.setImageBitmap(getBitmapFromUri(mUri));
 
         }
 
@@ -178,7 +175,16 @@ public class ContentActivity extends AppCompatActivity implements LoaderManager.
         String priceString = mPriceEditText.getText().toString().trim();
         String quantityString = mQuantityEditText.getText().toString().trim();
         String soldString = mSoldText.getText().toString().trim();
-        String imageString = mUri.toString();
+
+        // Check if this is supposed to be a new item
+        // and check if any of the fields in the editor are blank
+        if (mCurrentInvUri == null && (
+                TextUtils.isEmpty(nameString) || TextUtils.isEmpty(priceString) ||
+                TextUtils.isEmpty(quantityString) || TextUtils.isEmpty(soldString))) {
+            Toast.makeText(this, getString(R.string.editor_empty_not_allow),
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
         int quantityInt = Integer.parseInt(quantityString);
         int priceInt = Integer.parseInt(priceString);
         int soldInt = Integer.parseInt(soldString);
@@ -192,17 +198,10 @@ public class ContentActivity extends AppCompatActivity implements LoaderManager.
             quantityString = String.valueOf(quantityInt);
             soldString = String.valueOf(soldInt);
         }
-
-        // Check if this is supposed to be a new item
-        // and check if any of the fields in the editor are blank
-        if (mCurrentInvUri == null &&
-                TextUtils.isEmpty(nameString) || TextUtils.isEmpty(priceString) ||
-                TextUtils.isEmpty(quantityString) || TextUtils.isEmpty(soldString)) {
-            Toast.makeText(this, getString(R.string.editor_empty_not_allow),
-                    Toast.LENGTH_SHORT).show();
-            return;
+        String imageString = null;
+        if (mCurrentInvUri != null) {
+            imageString = mUri.toString();
         }
-
         // Create a ContentValues object where column names are the keys, and item attributes from the editor are the values.
         ContentValues values = new ContentValues();
         values.put(InvEntry.COLUMN_INV_NAME, nameString);
