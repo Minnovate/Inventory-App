@@ -42,5 +42,8 @@ public final class InvContract {
         public final static String COLUMN_INV_PRICE = "price";
         public final static String COLUMN_INV_SOLD = "sold";
         public final static String COLUMN_INV_IMAGE = "imagePath";
+        public static String getIdFromUri(Uri uri) {
+            return uri.getPathSegments().get(1);
+        }
     }
 }

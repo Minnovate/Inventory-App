@@ -1,9 +1,9 @@
 package com.example.android.inventoryapp;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.LoaderManager;
 import android.content.ContentValues;
-import android.content.Context;
 import android.content.CursorLoader;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -12,13 +12,13 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
-import android.provider.MediaStore;
+import android.os.ParcelFileDescriptor;
 import android.support.v4.app.NavUtils;
-import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -31,11 +31,10 @@ import android.widget.Toast;
 
 import com.example.android.inventoryapp.data.InvContract.InvEntry;
 
-import java.io.File;
-import java.io.FileOutputStream;
+import java.io.FileDescriptor;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+
+import static android.view.View.GONE;
 
 /**
  * Created by gamelord on 10/4/16.
@@ -51,10 +50,12 @@ public class ContentActivity extends AppCompatActivity implements LoaderManager.
     private EditText mPriceEditText;
     private EditText mQuantityEditText;
     private EditText mSoldText;
+    private EditText mImageEdit;
     private ImageView mImageView;
     private int number = 0;
+    private int restock = 1;
     private int basequantity = 0;
-
+    private static final String LOG_TAG = MainActivity.class.getSimpleName();
     // Boolean flag that keeps track of whether the item has been edited or not
     private boolean mInvHasChanged = false;
     private View.OnTouchListener mTouchListener = new View.OnTouchListener() {
@@ -65,10 +66,8 @@ public class ContentActivity extends AppCompatActivity implements LoaderManager.
         }
     };
 
-    static final int REQUEST_TAKE_PHOTO = 1;
-    Boolean imageStatus = false;
-    private String mImagePath;
-    String imagePath;
+    static final int PICK_IMAGE_REQUEST = 0;
+    private Uri mUri;
 
     //
     @Override
@@ -91,23 +90,14 @@ public class ContentActivity extends AppCompatActivity implements LoaderManager.
             invalidateOptionsMenu();
             // hire buttons and textView
             Button sellButton = (Button) findViewById(R.id.sell);
-            sellButton.setVisibility(View.GONE);
+            sellButton.setVisibility(GONE);
             Button restockButton = (Button) findViewById(R.id.restock);
-            restockButton.setVisibility(View.GONE);
+            restockButton.setVisibility(GONE);
             Button ordermoreButton = (Button) findViewById(R.id.ordermore);
-            ordermoreButton.setVisibility(View.GONE);
+            ordermoreButton.setVisibility(GONE);
             TextView inventory = (TextView) findViewById(R.id.inventory_guideline);
-            inventory.setVisibility(View.GONE);
-            Button imageButton = (Button) findViewById(R.id.takePhoto);
-            imageButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
+            inventory.setVisibility(GONE);
 
-                    imageStatus = false;
-                    dispatchTakePictureIntent();
-
-                }
-            });
         } else {
             // Otherwise this is an existing item, so change app bar to say "Edit an item"
             setTitle(getString(R.string.editor_activity_title_edit_item));
@@ -120,6 +110,7 @@ public class ContentActivity extends AppCompatActivity implements LoaderManager.
                 public void onClick(View view) {
                     basequantity = 0;
                     number = -1;
+                    restock = 0;
                     saveInv();
                 }
             });
@@ -129,6 +120,7 @@ public class ContentActivity extends AppCompatActivity implements LoaderManager.
                 public void onClick(View view) {
                     basequantity = -1;
                     number = +1;
+                    restock = 1;
                     saveInv();
                 }
             });
@@ -143,15 +135,17 @@ public class ContentActivity extends AppCompatActivity implements LoaderManager.
                     composeEmail(nameString, "New oder request for " + nameString, orderMessage);
                 }
             });
-            Button imageButton = (Button) findViewById(R.id.takePhoto);
-            imageButton.setVisibility(View.GONE);
+
+            //String imageString = mImageEdit.getText().toString().trim();
+//            mUri = Uri.parse(imageString);
+//            mImageView.setImageBitmap(getBitmapFromUri(mUri));
+
         }
 
         // Find all relevant views that we will need to read user input from
         mNameEditText = (EditText) findViewById(R.id.edit_inv_name);
         mPriceEditText = (EditText) findViewById(R.id.edit_inv_price);
         mQuantityEditText = (EditText) findViewById(R.id.edit_inv_quantity);
-        mImageView = (ImageView) findViewById(R.id.product_image);
         mSoldText = (EditText) findViewById(R.id.sold_quantity);
 
 
@@ -162,6 +156,16 @@ public class ContentActivity extends AppCompatActivity implements LoaderManager.
         mPriceEditText.setOnTouchListener(mTouchListener);
         mQuantityEditText.setOnTouchListener(mTouchListener);
         mSoldText.setOnTouchListener(mTouchListener);
+
+        //Handle image selection
+        Button selectImage = (Button) findViewById(R.id.imageButton);
+        selectImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                openImageSelector(view);
+            }
+        });
+        mImageView = (ImageView) findViewById(R.id.product_image);
     }
 
     /**
@@ -174,6 +178,7 @@ public class ContentActivity extends AppCompatActivity implements LoaderManager.
         String priceString = mPriceEditText.getText().toString().trim();
         String quantityString = mQuantityEditText.getText().toString().trim();
         String soldString = mSoldText.getText().toString().trim();
+        String imageString = mUri.toString();
         int quantityInt = Integer.parseInt(quantityString);
         int priceInt = Integer.parseInt(priceString);
         int soldInt = Integer.parseInt(soldString);
@@ -183,7 +188,7 @@ public class ContentActivity extends AppCompatActivity implements LoaderManager.
             return;
         } else {
             quantityInt = quantityInt + number; //add number to the quantity number
-            soldInt = soldInt - number;
+            soldInt = soldInt - number + restock;
             quantityString = String.valueOf(quantityInt);
             soldString = String.valueOf(soldInt);
         }
@@ -204,7 +209,7 @@ public class ContentActivity extends AppCompatActivity implements LoaderManager.
         values.put(InvEntry.COLUMN_INV_PRICE, priceString);
         values.put(InvEntry.COLUMN_INV_QUANTITY, quantityString);
         values.put(InvEntry.COLUMN_INV_SOLD, soldString);
-        values.put(InvEntry.COLUMN_INV_IMAGE, mImagePath);
+        values.put(InvEntry.COLUMN_INV_IMAGE, imageString);
 
 
         // Determine if this is a new or existing pet by checking if mCurrentPetUri is null or not
@@ -370,25 +375,15 @@ public class ContentActivity extends AppCompatActivity implements LoaderManager.
             int price = cursor.getInt(priceColumnIndex);
             int quantity = cursor.getInt(quantityColumnIndex);
             int sold = cursor.getInt(soldColumnIndex);
-            String mImagePath = cursor.getString(imageColumnIndex);
+            String mImage = cursor.getString(imageColumnIndex);
 
             // Update the views on the screen with the values from the database
             mNameEditText.setText(name);
             mPriceEditText.setText(Integer.toString(price));
             mQuantityEditText.setText(Integer.toString(quantity));
             mSoldText.setText(Integer.toString(sold));
-
-            // Get the dimensions of the bitmap
-            BitmapFactory.Options bmOptions = new BitmapFactory.Options();
-            bmOptions.inJustDecodeBounds = true;
-            BitmapFactory.decodeFile(mImagePath, bmOptions);
-
-            // Decode the image file into a Bitmap sized to fill the View
-            bmOptions.inJustDecodeBounds = false;
-            bmOptions.inPurgeable = true;
-
-            Bitmap bitmap = BitmapFactory.decodeFile(mImagePath, bmOptions);
-            mImageView.setImageBitmap(bitmap);
+            mUri = Uri.parse(mImage);
+            mImageView.setImageBitmap(getBitmapFromUri(mUri));
         }
     }
 
@@ -513,72 +508,60 @@ public class ContentActivity extends AppCompatActivity implements LoaderManager.
     }
 
     // Camera handler
-    private void dispatchTakePictureIntent() {
-        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+    public void openImageSelector(View view) {
+        Intent intent;
 
-        // Ensure that there's a camera activity to handle the intent
-        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-            // Create the File where the photo should go
-            File imageFile = null;
-            try {
-                imageFile = createImageFile();
-            } catch (IOException ex) {
-                // Error occurred while creating the File
-                ex.printStackTrace();
-            }
-            // Continue only if the File was successfully created
-            if (imageFile != null) {
-                Uri photoURI = FileProvider.getUriForFile(this,
-                        "com.example.android.inventoryapp",
-                        imageFile);
-                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
-                startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
-            }
+        if (Build.VERSION.SDK_INT < 19) {
+            intent = new Intent(Intent.ACTION_GET_CONTENT);
+        } else {
+            intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
         }
+
+        intent.setType("image/*");
+        startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE_REQUEST);
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (resultCode != RESULT_CANCELED) {
-            if (requestCode == REQUEST_TAKE_PHOTO && data != null) {
-                Bitmap photo = (Bitmap) data.getExtras().get("data");
-                mImageView.setImageBitmap(photo);
-            }
+    public void onActivityResult(int requestCode, int resultCode, Intent resultData) {
+        // The ACTION_OPEN_DOCUMENT intent was sent with the request code READ_REQUEST_CODE.
+        // If the request code seen here doesn't match, it's the response to some other intent,
+        // and the below code shouldn't run at all.
 
-            try {
-                createImageFile();
-            } catch (IOException e) {
-                e.printStackTrace();
+        if (requestCode == PICK_IMAGE_REQUEST && resultCode == Activity.RESULT_OK) {
+            // The document selected by the user won't be returned in the intent.
+            // Instead, a URI to that document will be contained in the return intent
+            // provided to this method as a parameter.  Pull that uri using "resultData.getData()"
+
+            if (resultData != null) {
+                mUri = resultData.getData();
+                Log.i(LOG_TAG, "Uri: " + mUri.toString());
+                mImageView.setImageBitmap(getBitmapFromUri(mUri));
             }
         }
     }
 
-    private File createImageFile() throws IOException {
-        // Create an image file name
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        String imageFileName = "JPEG_" + timeStamp + "_";
-        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-        File image = File.createTempFile(
-                imageFileName,  /* prefix */
-                ".jpg",         /* suffix */
-                storageDir      /* directory */
-        );
-
-        FileOutputStream outputStream;
-
+    private Bitmap getBitmapFromUri(Uri uri) {
+        ParcelFileDescriptor parcelFileDescriptor = null;
         try {
-            outputStream = openFileOutput(image.getAbsolutePath(), Context.MODE_PRIVATE);
-            outputStream.close();
+            parcelFileDescriptor =
+                    getContentResolver().openFileDescriptor(uri, "r");
+            FileDescriptor fileDescriptor = parcelFileDescriptor.getFileDescriptor();
+            Bitmap image = BitmapFactory.decodeFileDescriptor(fileDescriptor);
+            parcelFileDescriptor.close();
+            return image;
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(LOG_TAG, "Failed to load image.", e);
+            return null;
+        } finally {
+            try {
+                if (parcelFileDescriptor != null) {
+                    parcelFileDescriptor.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                Log.e(LOG_TAG, "Error closing ParcelFile Descriptor");
+            }
         }
-
-        // Save a file: path for use with ACTION_VIEW intents
-        mImagePath = "file:" + image.getAbsolutePath();
-        if (!imageStatus) {
-            imagePath = image.getAbsolutePath();
-            imageStatus = true;
-        }
-        return image;
     }
 }

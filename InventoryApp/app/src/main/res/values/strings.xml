@@ -53,6 +53,7 @@
         \n- Click Restock to increase the inventory by 1 unit
         \n- Click Buy to contact Supplier</string>
 
+    <string name="selectImage">Select Image</string>
     <string name="sell">Sell</string>
     <string name="restock">Restock</string>
     <string name="ordermore">Order more</string>

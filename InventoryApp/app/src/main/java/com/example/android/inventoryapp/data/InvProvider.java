@@ -96,7 +96,7 @@ public class InvProvider extends ContentProvider {
             throw new IllegalArgumentException("Please enter a valid quantity");
         }
         Integer sold = values.getAsInteger(InvEntry.COLUMN_INV_SOLD);
-        if (sold != null && sold <0 ) {
+        if (sold != null && sold < 0) {
             throw new IllegalArgumentException("Please enter a valid (> 0) sold quantity");
         }
         // Get writable database
@@ -149,6 +149,12 @@ public class InvProvider extends ContentProvider {
         if (values.containsKey(InvEntry.COLUMN_INV_PRICE)) {
             Integer price = values.getAsInteger(InvEntry.COLUMN_INV_PRICE);
             if (price == null && price < 0) {
+                throw new IllegalArgumentException("Inventory item requires a valid price");
+            }
+        }
+        if (values.containsKey(InvEntry.COLUMN_INV_SOLD)) {
+            Integer sold = values.getAsInteger(InvEntry.COLUMN_INV_SOLD);
+            if (sold == null && sold < 0) {
                 throw new IllegalArgumentException("Inventory item requires a valid price");
             }
         }

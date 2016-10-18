@@ -96,7 +96,9 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 InvEntry._ID,
                 InvEntry.COLUMN_INV_NAME,
                 InvEntry.COLUMN_INV_PRICE,
-                InvEntry.COLUMN_INV_QUANTITY};
+                InvEntry.COLUMN_INV_QUANTITY,
+                InvEntry.COLUMN_INV_SOLD,
+                InvEntry.COLUMN_INV_IMAGE};
 
         // This loader will execute the ContentProvider's query method on a background thread
         return new CursorLoader(this,   // Parent activity context
