@@ -50,7 +50,7 @@ public class ContentActivity extends AppCompatActivity implements LoaderManager.
     private EditText mPriceEditText;
     private EditText mQuantityEditText;
     private EditText mSoldText;
-    private EditText mImageEdit;
+    private String imageString;
     private ImageView mImageView;
     private int number = 0;
     private int restock = 1;
@@ -198,8 +198,10 @@ public class ContentActivity extends AppCompatActivity implements LoaderManager.
             quantityString = String.valueOf(quantityInt);
             soldString = String.valueOf(soldInt);
         }
-        String imageString = null;
-        if (mCurrentInvUri != null) {
+        if (mUri == null) {
+            imageString = null;
+        }
+        else {
             imageString = mUri.toString();
         }
         // Create a ContentValues object where column names are the keys, and item attributes from the editor are the values.
